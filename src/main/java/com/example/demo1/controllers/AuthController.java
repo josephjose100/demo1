@@ -19,6 +19,7 @@ import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -59,7 +60,11 @@ public class AuthController {
     
     @Autowired
     private jwtTokenService jwttokenService;
-
+    
+    public static final String ADMIN = "ROLE_ADMIN";
+    
+    public static final String DRIVER = "ROLE_DRIVER";
+    
     @PostMapping("/signin")
     public ResponseEntity<Map<String,String>> authenticateUser(@RequestBody LoginDto loginDto){
 //    	 try
@@ -176,7 +181,8 @@ public class AuthController {
     @PostMapping("/signup")
    // @PreAuthorize("permitAll()")
   //  @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PreAuthorize("isAuthenticated")
+  //  @PreAuthorize("isAuthenticated")
+    @Secured(ADMIN)
     public ResponseEntity<?> registerUser(@RequestBody SignUpDto signUpDto){
     	
     	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

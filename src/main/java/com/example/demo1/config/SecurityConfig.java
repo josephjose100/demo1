@@ -7,13 +7,15 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import com.example.demo1.filter.JwtAuthFilter;
+import com.example.demo1.filter.JwtBlacklistFilter;
+import com.example.demo1.repositories.JwtBlacklistedTokenRepository;
 
 @Configuration
 @EnableMethodSecurity
@@ -23,6 +25,9 @@ public class SecurityConfig {
   
     @Autowired
     private JwtAuthFilter authFilter;
+    
+    @Autowired
+	private JwtBlacklistedTokenRepository jwtBlacklistedTokenRepository;
     
     public SecurityConfig(UserDetailsService userDetailsService){
         this.userDetailsService = userDetailsService;
@@ -56,13 +61,18 @@ public class SecurityConfig {
     	
     	
     	http
+    	.addFilterBefore(new JwtBlacklistFilter(jwtBlacklistedTokenRepository), UsernamePasswordAuthenticationFilter.class)
         .csrf(csrf -> csrf.disable()) // Disable CSRF using Lambda DSL
+        .sessionManagement(sessionManagement -> 
+        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        )
         .authorizeHttpRequests(authorize -> 
             authorize
                 .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
-        )
+                
+        )        
         .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class); // Add custom filter
 
     return http.build();
